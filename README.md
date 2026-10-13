@@ -66,15 +66,15 @@ ros2 launch ~/gazebo_nuwa/robots/src/mini_car/launch/mini_car.launch.py \
 ```
 ②放方块(两块叠在左边,一块在右边 ✓)
 
-cd ~/gazebo_nuwa/robots/src/mini_car
+  cd ~/gazebo_nuwa/robots/src/mini_car  
 
-  BLK=/home/wyq/gazebo_nuwa/robots/src/mini_car/models/block.sdf
-  ros2 run ros_gz_sim create -file $BLK -name blk_stack_1 -x -2.75 -y -2.75 -z 0.778
-  ros2 run ros_gz_sim create -file $BLK -name blk_stack_2 -x -2.75 -y -2.75 -z 1.130
-  ros2 run ros_gz_sim create -file $BLK -name blk_single  -x  2.75 -y -2.75 -z 0.778
+  BLK=/home/wyq/gazebo_nuwa/robots/src/mini_car/models/block.sdf  
+  ros2 run ros_gz_sim create -file $BLK -name blk_stack_1 -x -2.75 -y -2.75 -z 0.778  
+  ros2 run ros_gz_sim create -file $BLK -name blk_stack_2 -x -2.75 -y -2.75 -z 1.130  
+  ros2 run ros_gz_sim create -file $BLK -name blk_single  -x  2.75 -y -2.75 -z 0.778  
 
 
-  ③ 看扫描
+  ③ 看扫描  
 
-  ros2 topic echo /scan --once > /tmp/scan.txt
-  wc -l /tmp/scan.txt
+  ros2 topic echo /scan --once > /tmp/scan.txt  
+  wc -l /tmp/scan.txt  
