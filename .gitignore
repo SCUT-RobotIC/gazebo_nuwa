@@ -1,0 +1,11 @@
+# ROS 2 / colcon 构建产物
+build/
+install/
+log/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# Office 临时锁文件
+~$*
