@@ -1,0 +1,31 @@
+# ros_gz_bridge 的配置文件 —— 只用来桥【两侧名字不一样】的话题。
+#
+# 两侧同名的话题走 mini_car.launch.py 里的命令行写法（`话题@ROS类型@gz类型`），
+# 那种写法两边必须同名 ✗ 名字不同的只能写在这里。
+#
+# ⚠⚠ 为什么 /clock 必须写在这里（这是个真 bug，2026-09-29 实测出来的）：
+#
+#   gz-sim 把时钟发在 【/world/<世界名>/clock】，而不是 /clock ✗
+#
+#   实测：
+#       gz topic -e -t /world/nuwa_field/clock   →  有数据 ✓
+#       gz topic -e -t /clock                    →  永远收不到 ✗
+#
+#   而 launch 里原来写的是 `/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock`，
+#   也就是 gz 侧也去找 /clock —— 找不到，所以 ROS 的 /clock 一个消息都没有 ✗
+#
+#   后果链：ROS 侧 /clock 空 → use_sim_time 的节点时钟永远停在 0
+#           → GLIM 的 tf buffer 认为"现在"是 0 秒
+#           → 它拿【点云的仿真时间戳】(几百秒) 去 lookupTransform
+#           → 被判定成"查询未来"，抛异常
+#           → GLIM 的 map→odom→base_link 这条 TF 链【一条都发不出来】✗
+#           （GLIM 内部照样算得好好的，只是发不出来 —— 症状很误导）
+#
+#   ⚠ 世界名改了的话（SDF 里的 <world name=...>），这里也要跟着改。
+#     我们所有由 field/gen_world.py 生成的世界都叫 nuwa_field ✓
+
+- ros_topic_name: "/clock"
+  gz_topic_name: "/world/nuwa_field/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS

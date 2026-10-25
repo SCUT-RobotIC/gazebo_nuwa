@@ -1,0 +1,210 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+    Tree Height: 700
+  - Class: rviz_common/Views
+    Expanded: ~
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Cell Size: 1
+      Color: 100; 100; 100
+      Plane Cell Count: 30
+      Reference Frame: <Fixed Frame>
+      Value: true
+
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Description Topic:
+        Value: /robot_description
+      Enabled: true
+      Name: 机器人
+      Visual Enabled: true
+      Value: true
+
+    # ============================================================
+    #  Mid-360 / GLIM
+    # ============================================================
+
+    # ---------- 累积的地图（子图拼起来的，GLIM 的全局建图结果）----------
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: GLIM 地图
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /glim_rosnode/map
+      Style: Points
+      Size (Pixels): 2
+      Size (m): 0.02
+      Use Fixed Frame: true
+      # ⚠ 想看成彩虹色（按高度）就用 AxisColor；
+      #   想看反射强度就改成 Intensity。默认的 Flat Color 是单一颜色。
+      #   注意：我们仿真的 mid360 【不做反射率模拟】，intensity 恒为 0 ✗
+      Color Transformer: AxisColor
+      Axis: Z
+      Decay Time: 0
+      Value: true
+
+    # ---------- 当前帧（Decay Time 一开，过去若干秒的点会留在屏幕上）----------
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: 当前帧（带拖尾）
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /glim_rosnode/points
+      Style: Points
+      Size (Pixels): 2
+      Size (m): 0.015
+      Use Fixed Frame: true
+      Color Transformer: AxisColor
+      Axis: Z
+      # ⚠ 这个就是"立刻能看到积累"的关键：
+      #   0 = 只显示当前帧（看着不积累）；30 = 过去 30 秒的点都留在屏幕上 ✓
+      Decay Time: 30
+      Value: true
+
+    # ============================================================
+    #  RealSense D435 / D455（RGB-D 相机）
+    #
+    #  ⚠ 这两个点云是【深度图按内参反投影】出来的，每帧 640x480 = 307200 个点 ✗
+    #    比 mid360 的 19800 点重得多，同时开两个 + 拖尾会让 RViz 很卡 ✗
+    #    卡的话：把 Size 调小、或者把不需要的那个 Enabled 关掉 ✓
+    #
+    #  用 RGB8 染色 —— 相机点云带 rgb 字段（实测字段是 x,y,z,rgb）✓
+    #  这样看到的就是【真彩色点云】，最直观 ✓
+    # ============================================================
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: D435 点云（彩色）
+      Topic:
+        Depth: 3
+        Durability Policy: Volatile
+        Filter size: 5
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /d435/points
+      Style: Points
+      Size (Pixels): 1
+      Size (m): 0.005
+      Use Fixed Frame: true
+      Color Transformer: RGB8
+      Decay Time: 0
+      Value: true
+
+    # ---------- D455（默认关掉）----------
+    # ⚠ 仿真默认【不加载 D455】（launch 里 d455:=false）✗
+    #   要用的时候：ros2 launch ... d455:=true  —— 然后把这个 Enabled 勾上 ✓
+    #   不勾也没关系，话题不存在时 RViz 只是这一项不显示 ✓
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: false
+      Name: D455 点云（彩色，默认关）
+      Topic:
+        Depth: 3
+        Durability Policy: Volatile
+        Filter size: 5
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /d455/points
+      Style: Points
+      Size (Pixels): 1
+      Size (m): 0.005
+      Use Fixed Frame: true
+      Color Transformer: RGB8
+      Decay Time: 0
+      Value: false
+
+    # ---------- 彩色图（默认关掉，想看就勾上；会占一块屏幕）----------
+    - Class: rviz_default_plugins/Image
+      Enabled: false
+      Name: D435 彩色图
+      Max Value: 1
+      Min Value: 0
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /d435/image
+      Value: false
+
+    - Class: rviz_default_plugins/Image
+      Enabled: false
+      Name: D455 彩色图（默认关）
+      Max Value: 1
+      Min Value: 0
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /d455/image
+      Value: false
+
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Name: TF
+      Show Arrows: false
+      Show Axes: true
+      Show Names: true
+      Marker Scale: 0.5
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    # ⚠⚠ Fixed Frame 必须选一个【一定存在】的坐标系 ✗
+    #
+    #   原来这里写的是 map —— 但 map 只有【GLIM 在跑】的时候才存在 ✗
+    #   不跑 GLIM 时，RViz 找不到这个坐标系，会直接报
+    #       "No transform from [xxx] to frame [map]"
+    #   而且【所有显示项一起失效】—— 点云、图像、机器人全都显示不出来，
+    #   看着像是"传感器没数据"，其实数据都在，只是 RViz 放不下 ✗
+    #   （这个坑很误导：会让人去查传感器，实际是 Fixed Frame 选错了）
+    #
+    #   base_link 是【永远存在】的（robot_state_publisher 提供），所以选它 ✓
+    #     不跑 GLIM 时：相机/雷达的点云都能显示 ✓
+    #     跑 GLIM 时：整条链 map→odom→base_link 是通的，
+    #                 RViz 能反查出 base_link→map，GLIM 地图也能显示 ✓
+    Fixed Frame: base_link
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 25
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Name: Current View
+      Pitch: 1.0
+      Target Frame: <Fixed Frame>
+      Yaw: 0
+Window Geometry:
+  Height: 1000
+  Width: 1600
+  Displays:
+    collapsed: false
+  Views:
+    collapsed: false

@@ -1,0 +1,121 @@
+{
+  /*** ROS-related config ***/
+  //
+  // ★★★ 这是给【Gazebo 仿真】用的版本，不是真机的 ★★★
+  //     真机那份在 ~/SCUT-RobotIC-BeHaviorTree_R1.ROS2/src/localization/glim/config/
+  //     两者的差别只有下面标了 [仿真] 的几项。改之前先想清楚改的是哪一份。
+  //
+  // 四个关键值都是【实测】定出来的，不是抄的（原文件自己就注了
+  // "Do not trust these values blindly!"）：
+  //
+  //   lidar_frame_id  mini_car/base_link/mid360
+  //       点云消息里的 frame_id。已实测确认点坐标就在这个坐标系下
+  //       （把点换算到世界系后，最远的点正好落在 24x24 地板边缘、z≈0）
+  //
+  //   imu_frame_id    mini_car/base_link/imu
+  //       IMU 消息里的 frame_id
+  //
+  //   T_lidar_imu     [0, 0, -0.10, 0, 0, 0, 1]   ← 在 config_sensors.json 里
+  //       imu 在 base_link 上方 0.30，雷达在上方 0.40，都是 fixed joint、无旋转
+  //       p_lidar = p_imu + (0.30 - 0.40) = p_imu + (0,0,-0.10)
+  //       ⚠ 方向别搞反：雷达在 IMU【上方】，所以是 -0.10。写反了 GLIM 会把
+  //         10 cm 杆臂当成 -10 cm，位姿会持续漂 ✗
+  //
+  //   acc_scale       1.0
+  //       Gazebo 的 sensor_msgs/Imu 用的是标准 m/s²（实测 |a| = 9.7999）
+  //       而 Livox 真机驱动发的是 g，所以真机那份要写 9.80665 ✗ 别抄
+  //       （glim_ros.cpp:239 有自动检测：写 0 会按加速度模长判断）
+  //
+  // --- Backend modules ---
+  // enable_local_mapping   : Enable local mapping module
+  // enable_global_mapping  : Enable global mapping module
+  // keep_raw_points        : Keep raw points in the map (required for only extension modules)
+  //
+  // --- TF config ---
+  // GLIM publishes TF subtrees "map -> odom -> base_frame" and "imu -> lidar".
+  // publish_imu2lidar      : If false, do not publish "imu -> lidar" TF
+  //
+  // --- Topics ---
+  // imu_topic / points_topic
+  //
+  // --- QoS options ---
+  // profile: default, system_default, sensor_data, services_default, parameters, parameter_events
+  "glim_ros": {
+    // Backend modules
+    "enable_local_mapping": true,
+    "enable_global_mapping": true,
+    // Points config
+    "keep_raw_points": false,
+    // IMU config
+    "imu_time_offset": 0.0,
+    "points_time_offset": 0.0,
+    "acc_scale": 1.0, // [仿真] Gazebo 发的是 m/s²，不是 g ✓
+    // TF config
+    "imu_frame_id": "mini_car/base_link/imu", // [仿真]
+    "lidar_frame_id": "mini_car/base_link/mid360", // [仿真]
+    // [仿真] ⚠ 这里必须写 base_link，不能学真机写 imu 帧 ✗
+    //
+    //   真机那份是 "base_frame_id": "livox/imu"（和 imu 同一个帧），
+    //   因为真机没有别的 TF 源。但【仿真里不行】—— mini_car.launch.py
+    //   已经发了一条静态 TF  base_link -> mini_car/base_link/imu，
+    //   如果 GLIM 再发 odom -> mini_car/base_link/imu，
+    //   那这个帧就有【两个父节点】→ tf2 报 TF_MULTIPLE_PARENTS ✗
+    //
+    //   写 base_link 之后，TF 树是一棵干净的树：
+    //       map -> odom -> base_link -> mini_car/base_link/imu
+    //                                -> mini_car/base_link/mid360
+    //                                -> mini_car/base_link/lidar_2d
+    //   （rviz_viewer.cpp:203 正好有这条分支：base_frame_id != imu_frame_id 时，
+    //     它会先 lookupTransform(imu, base) 再合成，不要求两者相同 ✓）
+    "base_frame_id": "base_link",
+    "odom_frame_id": "odom",
+    "map_frame_id": "map",
+    // [仿真] 必须 false ✗ 理由同上但方向相反：
+    //   GLIM 发   mini_car/base_link/imu -> mini_car/base_link/mid360
+    //   静态 TF 发 base_link -> mini_car/base_link/mid360
+    //   → mid360 又变成两个父节点 ✗
+    //   GLIM 内部用的是 config_sensors.json 里的 T_lidar_imu，不依赖这条 TF ✓
+    "publish_imu2lidar": false,
+    "tf_time_offset": 1e-6,
+    // Extension modules
+    // ⚠⚠ librviz_viewer.so 是【必须】的，不是"可选的可视化" ✗ 这一点很容易踩：
+    //
+    //   GLIM 主节点（glim_rosnode）自己【不创建任何 ROS 发布器】，
+    //   TF 广播器和所有话题全都在这个扩展模块里（rviz_viewer.cpp:61-89）：
+    //
+    //       tf_broadcaster         →  map -> odom -> base 的 TF
+    //       ~/points_corrected     →  去畸变后的点云（glim2small_gicp 要这个）
+    //       ~/map  ~/odom  ~/pose  →  地图/里程计/位姿
+    //
+    //   不加载它的话：GLIM 照样在后台正常算（日志里 IMU 初始化、里程计都正常），
+    //   但 ros2 node info 里【只有 /rosout】，话题列表里什么都没有，
+    //   RViz 也画不出任何东西 —— 看起来像"卡住了"，其实只是发不出来 ✗
+    //
+    //   （名字里的 "rviz" 只是说"数据是给 RViz 看的"，它自己不依赖 RViz 进程）
+    //
+    // 另外两个（要不要都行）：
+    //     "libstandard_viewer.so"   GLIM 自带的 OpenGL 查看器（要图形界面）
+    //     "libmemory_monitor.so"    只打印内存占用，不画图
+    "extension_modules": [
+      "librviz_viewer.so"
+    ],
+    // Topics
+    // [仿真] 真机是 livox_ros_driver2 的 livox/lidar + livox/imu；
+    //   仿真这边 mid360_sim 插件发 /mid360/points（ros_gz_bridge 桥成
+    //   sensor_msgs/PointCloud2，字段 x,y,z,intensity,tag,line,ring,t）✓
+    "imu_topic": "/imu",
+    "points_topic": "/mid360/points",
+    "image_topic": "/image",
+    // QoS options
+    "imu_qos": {
+      "profile": "sensor_data",
+      "depth": 1000
+    },
+    "points_qos": {
+      "profile": "sensor_data"
+    },
+    "image_qos": {
+      "profile": "sensor_data"
+    }
+  }
+}

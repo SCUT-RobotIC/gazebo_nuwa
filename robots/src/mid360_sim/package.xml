@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>mid360_sim</name>
+  <version>0.1.0</version>
+  <description>
+    Gazebo Sim (gz-sim 8) system plugin that emulates a Livox Mid-360:
+    measured non-repetitive scan pattern, per-point raycasting at each point's
+    own time, and per-point timestamps in PointCloudPacked.
+  </description>
+  <maintainer email="wyq@todo.todo">wyq</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>cmake</buildtool_depend>
+
+  <!-- The Gazebo dependencies are resolved by CMake, not by rosdep. -->
+  <exec_depend>ros_gz_bridge</exec_depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>

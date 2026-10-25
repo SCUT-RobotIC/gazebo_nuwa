@@ -1,0 +1,48 @@
+{
+  /*** SubMapping ***
+  // See config_sub_mapping_gpu.json for the full description of the parameters.
+  */
+  "sub_mapping": {
+    "so_name": "libsub_mapping.so",
+    "enable_imu": true,
+    "enable_optimization": false,
+    // Keyframe update strategy
+    //
+    // ⚠⚠ 必须用 DISPLACEMENT，不能用原版的 OVERLAP（这是【仿真专属】的改动）✗
+    //
+    //   OVERLAP 的判定是（sub_mapping.cpp:248）：
+    //       overlap = overlap_auto(上个关键帧的体素图, 当前帧, 相对位姿)
+    //       insert_as_keyframe = overlap < max_keyframe_overlap(0.6)
+    //
+    //   而 overlap_auto 比的是【世界坐标系下的体素图】。我们的房间是静态的：
+    //   4 面墙、地面都不动 → 点不论从哪儿看都落在同样的世界体素里
+    //   → 重叠率【恒为 ~100%】→ overlap < 0.6 永不成立
+    //   → 一个关键帧都建不出来 → 一个子图都建不出来 → /map 永远是空的 ✗✗
+    //
+    //   实测：车沿场地跑了几十米，/glim_rosnode/map 一直没有数据，
+    //         而里程计和点云话题都正常（10 Hz）—— 症状就是"只在建图这一步卡住"。
+    //
+    //   真机没这个问题：真实场馆里杂物多、有柱子挡视线、别的机器人在动，
+    //   走一段重叠率自然掉下来 ✓ 所以真机那份配置【保持 OVERLAP 不动】。
+    //
+    //   DISPLACEMENT 是按位移/转角判定，确定性，不受场景空旷程度影响 ✓
+    //   转半圈(keyframe_update_interval_rot=3.14) 或 走 1 m 就产生一个关键帧。
+    "max_num_keyframes": 15,
+    "keyframe_update_strategy": "DISPLACEMENT",
+    "keyframe_update_min_points": 500,
+    "keyframe_update_interval_rot": 3.14,
+    "keyframe_update_interval_trans": 1.0,
+    // Relative pose factors
+    "create_between_factors": false,
+    "between_registration_type": "GICP",
+    // Registration error factors
+    "registration_error_factor_type": "VGICP",
+    "keyframe_randomsampling_rate": 1.0,
+    "keyframe_voxel_resolution": 0.25,
+    "keyframe_voxelmap_levels": 2,
+    "keyframe_voxelmap_scaling_factor": 2.0,
+    // Post processing
+    "submap_downsample_resolution": 0.3,
+    "submap_voxel_resolution": 0.5
+  }
+}

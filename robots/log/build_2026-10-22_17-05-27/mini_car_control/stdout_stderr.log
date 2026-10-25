@@ -1,0 +1,29 @@
+running develop
+running egg_info
+creating mini_car_control.egg-info
+writing mini_car_control.egg-info/PKG-INFO
+writing dependency_links to mini_car_control.egg-info/dependency_links.txt
+writing entry points to mini_car_control.egg-info/entry_points.txt
+writing requirements to mini_car_control.egg-info/requires.txt
+writing top-level names to mini_car_control.egg-info/top_level.txt
+writing manifest file 'mini_car_control.egg-info/SOURCES.txt'
+reading manifest file 'mini_car_control.egg-info/SOURCES.txt'
+writing manifest file 'mini_car_control.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/python3.10/site-packages/mini-car-control.egg-link (link to .)
+Installing add_point_time script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+Installing br_mission script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+Installing goto_pose script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+Installing odom_to_tf script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+Installing place_block script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+Installing swerve_controller script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+Installing teleop_wasd script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+Installing tower_check script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control
+
+Installed /home/wyq/work/nuwa_sim/robots/build/mini_car_control
+running symlink_data
+creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index
+creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index/resource_index
+creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index/resource_index/packages
+symbolically linking /home/wyq/work/nuwa_sim/robots/build/mini_car_control/resource/mini_car_control -> /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index/resource_index/packages
+symbolically linking /home/wyq/work/nuwa_sim/robots/build/mini_car_control/package.xml -> /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/mini_car_control

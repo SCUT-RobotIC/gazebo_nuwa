@@ -1,0 +1,70 @@
+[0.000000] (-) TimerEvent: {}
+[0.000253] (-) JobUnselected: {'identifier': 'mid360_sim'}
+[0.000314] (-) JobUnselected: {'identifier': 'mini_car'}
+[0.000357] (mini_car_control) JobQueued: {'identifier': 'mini_car_control', 'dependencies': OrderedDict()}
+[0.001680] (mini_car_control) JobStarted: {'identifier': 'mini_car_control'}
+[0.099206] (-) TimerEvent: {}
+[0.199794] (-) TimerEvent: {}
+[0.300240] (-) TimerEvent: {}
+[0.400615] (-) TimerEvent: {}
+[0.501075] (-) TimerEvent: {}
+[0.601621] (-) TimerEvent: {}
+[0.702138] (-) TimerEvent: {}
+[0.802581] (-) TimerEvent: {}
+[0.903168] (-) TimerEvent: {}
+[1.003630] (-) TimerEvent: {}
+[1.104130] (-) TimerEvent: {}
+[1.204782] (-) TimerEvent: {}
+[1.305317] (-) TimerEvent: {}
+[1.405926] (-) TimerEvent: {}
+[1.506364] (-) TimerEvent: {}
+[1.606830] (-) TimerEvent: {}
+[1.707370] (-) TimerEvent: {}
+[1.807948] (-) TimerEvent: {}
+[1.908482] (-) TimerEvent: {}
+[2.008957] (-) TimerEvent: {}
+[2.109393] (-) TimerEvent: {}
+[2.154105] (mini_car_control) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/wyq/work/nuwa_sim/robots/build/mini_car_control/build', '--no-deps', 'symlink_data'], 'cwd': '/home/wyq/work/nuwa_sim/robots/build/mini_car_control', 'env': {'GJS_DEBUG_TOPICS': 'JS ERROR;JS LOG', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/wyq', 'ANTHROPIC_MODEL': 'deepseek-flash[1m]', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'AI_AGENT': 'claude-code_2-1-304_agent', 'LANGUAGE': 'zh_CN:zh:en_US:en', 'USER': 'wyq', 'CLAUDE_CODE_ENTRYPOINT': 'claude-vscode', 'LC_TIME': 'zh_CN.UTF-8', 'VSCODE_NLS_CONFIG': '{"userLocale":"zh-cn","osLocale":"zh-cn","resolvedLanguage":"zh-cn","defaultMessagesFile":"/usr/share/code/resources/app/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/wyq/.config/Code/clp/75539731208fa508a5b042c8fe051beb.zh-cn/tcf.json","messagesFile":"/home/wyq/.config/Code/clp/75539731208fa508a5b042c8fe051beb.zh-cn/fddfcd8da19c63ee5196144d13e7e92b78bc753fbb5952ae3e83991140959c52/nls.messages.json","corruptMarkerFile":"/home/wyq/.config/Code/clp/75539731208fa508a5b042c8fe051beb.zh-cn/corrupted.info"},"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"75539731208fa508a5b042c8fe051beb.zh-cn","_languagePackSupport":true,"_translationsConfigFile":"/home/wyq/.config/Code/clp/75539731208fa508a5b042c8fe051beb.zh-cn/tcf.json","_cacheRoot":"/home/wyq/.config/Code/clp/75539731208fa508a5b042c8fe051beb.zh-cn","_resolvedLanguagePackCoreLocation":"/home/wyq/.config/Code/clp/75539731208fa508a5b042c8fe051beb.zh-cn/fddfcd8da19c63ee5196144d13e7e92b78bc753fbb5952ae3e83991140959c52","_corruptedFile":"/home/wyq/.config/Code/clp/75539731208fa508a5b042c8fe051beb.zh-cn/corrupted.info"}', 'GIT_EDITOR': 'true', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'XDG_SESSION_TYPE': 'x11', '__GLX_VENDOR_LIBRARY_NAME': 'nvidia', 'CLAUDE_AGENT_SDK_VERSION': '0.3.304', 'CLAUDE_CODE_SESSION_ATTENDED': '1', 'SHLVL': '0', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib', 'CLAUDE_CODE_MESSAGING_TOKEN': '59cced2fd1f1313be44db159aea15642', 'HOME': '/home/wyq', 'CHROME_DESKTOP': 'com.microsoft.VSCode.desktop', 'CONDA_SHLVL': '0', 'OLDPWD': '/home/wyq/work/nuwa_sim/robots/src/mini_car_control/mini_car_control', 'DESKTOP_SESSION': 'ubuntu', 'VSCODE_IPC_HOOK': '/run/user/1000/vscode-d5afdc2b-1.14-main.sock', 'ANTHROPIC_DEFAULT_SONNET_MODEL': 'deepseek-flash[1m]', 'GIO_LAUNCHED_DESKTOP_FILE': '/usr/share/applications/com.microsoft.VSCode.desktop', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'CLAUDE_CODE_CHILD_SESSION': '1', 'LC_MONETARY': 'zh_CN.UTF-8', 'MANAGERPID': '2469', 'SYSTEMD_EXEC_PID': '2821', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'GIO_LAUNCHED_DESKTOP_FILE_PID': '4624', 'VSCODE_CRASH_REPORTER_PROCESS_TYPE': 'extensionHost', 'IM_CONFIG_PHASE': '1', 'VSCODE_L10N_BUNDLE_LOCATION': 'file:///home/wyq/.vscode/extensions/ms-ceintl.vscode-language-pack-zh-hans-1.131.2026090407/translations/extensions/vscode.markdown-language-features.i18n.json', 'COLCON_PREFIX_PATH': '/home/wyq/gazebo_nuwa/robots/install', 'CLAUDE_CODE_EFFORT_LEVEL': 'max', 'ROS_DISTRO': 'humble', 'GTK_IM_MODULE': 'fcitx', 'LOGNAME': 'wyq', '__VK_LAYER_NV_optimus': 'NVIDIA_only', 'CLAUDE_CODE_EMIT_STARTUP_TIMING': '1', 'JOURNAL_STREAM': '8:12665', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'CLAUDE_CODE_QUESTION_PREVIEW_FORMAT': 'markdown', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'wyq', 'ANTHROPIC_BASE_URL': 'https://api.deepseek.com/anthropic', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'FC_FONTATIONS': '1', 'ROS_LOCALHOST_ONLY': '0', 'WINDOWPATH': '2', 'ANTHROPIC_DEFAULT_OPUS_MODEL': 'deepseek-flash[1m]', 'MCP_CONNECTION_NONBLOCKING': 'true', 'PATH': '/home/wyq/anaconda3/envs/OpenCV/bin:/home/wyq/.local/bin:/home/wyq/.npm-global/bin:/home/wyq/.local/bin:/home/wyq/.npm-global/bin:/home/wyq/anaconda3/condabin:/opt/ros/humble/bin:/home/wyq/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/wyq/.fishros/bin:/home/wyq/.fishros/bin', 'SESSION_MANAGER': 'local/wyq-JIAOLONG-Series:@/tmp/.ICE-unix/2793,unix/wyq-JIAOLONG-Series:/tmp/.ICE-unix/2793', 'INVOCATION_ID': '6597390072214a3ea30a2f8de66dde6e', 'VSCODE_NODE_COMPILE_CACHE_ROOT': '/usr/share/code/resources/app/node-compile-cache', 'COREPACK_ENABLE_AUTO_PIN': '0', 'XDG_MENU_PREFIX': 'gnome-', 'LC_ADDRESS': 'zh_CN.UTF-8', 'XDG_RUNTIME_DIR': '/run/user/1000', 'CLAUDE_EFFORT': 'max', 'DISPLAY': ':1', 'CLAUDE_PID': '170854', 'NoDefaultCurrentDirectoryInExePath': '1', 'LANG': 'zh_CN.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'LC_TELEPHONE': 'zh_CN.UTF-8', 'ANTHROPIC_DEFAULT_HAIKU_MODEL': 'deepseek-flash', '__NV_PRIME_RENDER_OFFLOAD': '1', 'XMODIFIERS': '@im=fcitx', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/gdm/Xauthority', 'SSH_AGENT_LAUNCHER': 'gnome-keyring', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/wyq/gazebo_nuwa/robots/install/mini_car_control:/opt/ros/humble', 'CONDA_PYTHON_EXE': '/home/wyq/anaconda3/bin/python', 'SHELL': '/bin/bash', 'LC_NAME': 'zh_CN.UTF-8', 'ANTHROPIC_AUTH_TOKEN': 'sk-93f0db4b79174cc0ba3259ac0cbaa508', 'QT_ACCESSIBILITY': '1', 'ELECTRON_RUN_AS_NODE': '1', 'GDMSESSION': 'ubuntu', 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING': 'true', 'CLAUDE_CODE_SESSION_ID': '26cb7cd6-71a5-4a2a-9647-e8a818e0f9d8', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CLAUDECODE': '1', 'LC_MEASUREMENT': 'zh_CN.UTF-8', 'GPG_AGENT_INFO': '/run/user/1000/gnupg/S.gpg-agent:0:1', 'GJS_DEBUG_OUTPUT': 'stderr', 'LC_IDENTIFICATION': 'zh_CN.UTF-8', 'VIRTUAL_ENV': '/home/wyq/anaconda3/envs/OpenCV', 'QT_IM_MODULE': 'fcitx', 'PWD': '/home/wyq/work/nuwa_sim/robots/build/mini_car_control', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'CONDA_EXE': '/home/wyq/anaconda3/bin/conda', 'VSCODE_CODE_CACHE_PATH': '/home/wyq/.config/Code/CachedData/6d62b1d5dace93a33b3a6d3eca1317bd5e15bcb1', 'CLUTTER_IM_MODULE': 'fcitx', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'CLAUDE_CODE_EXECPATH': '/home/wyq/.vscode/extensions/anthropic.claude-code-2.1.304-linux-x64/resources/native-binary/claude', 'PYTHONPATH': '/home/wyq/work/nuwa_sim/robots/build/mini_car_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/python3.10/site-packages:/home/wyq/gazebo_nuwa/robots/install/mini_car_control/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'LC_NUMERIC': 'zh_CN.UTF-8', 'CLAUDE_CODE_ENABLE_TASKS': '0', 'LC_PAPER': 'zh_CN.UTF-8', 'COLCON': '1', 'CLAUDE_CODE_SUBAGENT_MODEL': 'deepseek-flash', 'CLAUDE_CODE_AUTO_COMPACT_WINDOW': '786432', 'CLAUDE_CODE_MESSAGING_SOCKET': '/run/user/1000/cc-socks/170854.sock', 'VSCODE_PID': '4624'}, 'shell': False}
+[2.209613] (-) TimerEvent: {}
+[2.310049] (-) TimerEvent: {}
+[2.410658] (-) TimerEvent: {}
+[2.511119] (-) TimerEvent: {}
+[2.611660] (-) TimerEvent: {}
+[2.712172] (-) TimerEvent: {}
+[2.759029] (mini_car_control) StdoutLine: {'line': b'running develop\n'}
+[2.812307] (-) TimerEvent: {}
+[2.912695] (-) TimerEvent: {}
+[3.013254] (-) TimerEvent: {}
+[3.113826] (-) TimerEvent: {}
+[3.126838] (mini_car_control) StdoutLine: {'line': b'running egg_info\n'}
+[3.127372] (mini_car_control) StdoutLine: {'line': b'creating mini_car_control.egg-info\n'}
+[3.127872] (mini_car_control) StdoutLine: {'line': b'writing mini_car_control.egg-info/PKG-INFO\n'}
+[3.128027] (mini_car_control) StdoutLine: {'line': b'writing dependency_links to mini_car_control.egg-info/dependency_links.txt\n'}
+[3.128175] (mini_car_control) StdoutLine: {'line': b'writing entry points to mini_car_control.egg-info/entry_points.txt\n'}
+[3.128295] (mini_car_control) StdoutLine: {'line': b'writing requirements to mini_car_control.egg-info/requires.txt\n'}
+[3.128394] (mini_car_control) StdoutLine: {'line': b'writing top-level names to mini_car_control.egg-info/top_level.txt\n'}
+[3.129071] (mini_car_control) StdoutLine: {'line': b"writing manifest file 'mini_car_control.egg-info/SOURCES.txt'\n"}
+[3.132025] (mini_car_control) StdoutLine: {'line': b"reading manifest file 'mini_car_control.egg-info/SOURCES.txt'\n"}
+[3.132874] (mini_car_control) StdoutLine: {'line': b"writing manifest file 'mini_car_control.egg-info/SOURCES.txt'\n"}
+[3.134840] (mini_car_control) StdoutLine: {'line': b'running build_ext\n'}
+[3.135391] (mini_car_control) StdoutLine: {'line': b'Creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/python3.10/site-packages/mini-car-control.egg-link (link to .)\n'}
+[3.136474] (mini_car_control) StdoutLine: {'line': b'Installing add_point_time script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.136928] (mini_car_control) StdoutLine: {'line': b'Installing br_mission script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.137191] (mini_car_control) StdoutLine: {'line': b'Installing goto_pose script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.137595] (mini_car_control) StdoutLine: {'line': b'Installing odom_to_tf script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.137986] (mini_car_control) StdoutLine: {'line': b'Installing place_block script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.138174] (mini_car_control) StdoutLine: {'line': b'Installing swerve_controller script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.138332] (mini_car_control) StdoutLine: {'line': b'Installing teleop_wasd script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.138476] (mini_car_control) StdoutLine: {'line': b'Installing tower_check script to /home/wyq/work/nuwa_sim/robots/install/mini_car_control/lib/mini_car_control\n'}
+[3.138705] (mini_car_control) StdoutLine: {'line': b'\n'}
+[3.138775] (mini_car_control) StdoutLine: {'line': b'Installed /home/wyq/work/nuwa_sim/robots/build/mini_car_control\n'}
+[3.138913] (mini_car_control) StdoutLine: {'line': b'running symlink_data\n'}
+[3.138967] (mini_car_control) StdoutLine: {'line': b'creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index\n'}
+[3.139099] (mini_car_control) StdoutLine: {'line': b'creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index/resource_index\n'}
+[3.139202] (mini_car_control) StdoutLine: {'line': b'creating /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index/resource_index/packages\n'}
+[3.139257] (mini_car_control) StdoutLine: {'line': b'symbolically linking /home/wyq/work/nuwa_sim/robots/build/mini_car_control/resource/mini_car_control -> /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/ament_index/resource_index/packages\n'}
+[3.139361] (mini_car_control) StdoutLine: {'line': b'symbolically linking /home/wyq/work/nuwa_sim/robots/build/mini_car_control/package.xml -> /home/wyq/work/nuwa_sim/robots/install/mini_car_control/share/mini_car_control\n'}
+[3.214043] (-) TimerEvent: {}
+[3.232825] (mini_car_control) CommandEnded: {'returncode': 0}
+[3.266772] (mini_car_control) JobEnded: {'identifier': 'mini_car_control', 'rc': 0}
+[3.267837] (-) EventReactorShutdown: {}

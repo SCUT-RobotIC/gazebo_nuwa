@@ -1,0 +1,639 @@
+<?xml version="1.0"?>
+<robot name="mini_car" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!--参数定义-->
+  <xacro:property name="wheel_radius" value="0.05"/>
+  <xacro:property name="wheel_width"  value="0.02"/>
+  <xacro:property name="half_track"   value="0.30"/>
+  <xacro:property name="hub_x" value="0.30"/>
+  <xacro:property name="hub_y" value="0.30"/>
+  <xacro:property name="hub_z" value="-0.25"/>
+  <xacro:property name="signx" value="1"/>
+  <xacro:property name="signy" value="1"/>
+
+  <!-- ============ 开关：要不要装 D455 ============
+       ⚠ 默认【不装】✗ —— 用户要求"深度相机目前只弄 D435"，
+          D455 留着，要仿真的时候再加 ✓
+
+       为什么用开关而不是直接删掉：
+         删了以后要恢复得翻 git 或者重写一遍 ✗
+         开关的话一条参数就加回来 ✓
+
+       怎么打开（两种都行）：
+         ① 命令行直接跑 xacro：
+              xacro mini_car.xacro with_d455:=true
+         ② 通过 launch（推荐，会连桥接和静态TF一起加上）：
+              ros2 launch .../mini_car.launch.py d455:=true
+
+       ⚠ 两份代价：D455 是第二个 640x480 RGB-D 相机，
+          实测两个一起开会把 RTF 从 1.000 压到 0.897 ✗
+          而且相机点云是 640x480 = 307200 点/帧，比 mid360 的 19800 重 15 倍 ✗ -->
+  <xacro:arg name="with_d455" default="false"/>
+
+  <!-- Mid-360 实测扫描轨迹文件（空/相对路径时插件按 .so 位置查找）。
+       mini_car.launch.py 会传进来一个绝对路径，整包挪目录也不用改 ✓ -->
+  <xacro:arg name="mid360_pattern" default="mid360.csv"/>
+
+
+
+  <!--可复用的块-->
+  <xacro:macro name="my_corner" params="tag signx signy">
+    <!--轮子转向-->
+    <gazebo>
+        <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
+          <joint_name>joint_wheel_${tag}</joint_name>
+          <!-- 显式话题名，和转向那边保持一致的风格 -->
+          <topic>/mini_car/wheel_${tag}/cmd_vel</topic>
+        </plugin>
+        <!--舵机转向-->
+        <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+          <joint_name>joint_steer_${tag}</joint_name>
+          <initial_position>0.0</initial_position>
+          <!-- 必须显式指定话题名！插件的默认名是
+                 /model/mini_car/joint/joint_steer_XX/0/cmd_pos
+               中间那个 "0"（轴序号）是纯数字段，ROS 2 不允许话题名的任何一段
+               以数字开头（InvalidTopicNameException），桥会建不出来。
+               下面这个名字两边都能用。 -->
+          <topic>/mini_car/steer_${tag}/cmd_pos</topic>
+        </plugin>
+    </gazebo>
+
+    <link name="wheel_${tag}">
+      <visual>
+        <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <material name="青色">
+          <color rgba="0.0 1.0 1.0 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.3"/>
+        <inertia ixx="0.0001975" ixy="0.0" ixz="0.0"
+          iyy="0.000375" iyz="0.0" izz="0.0001975"/>
+      </inertial>
+    </link>
+    <link name="steer_${tag}">
+    <visual>
+      <origin xyz="0.0 0.0 0.10" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.06 0.06 0.15"/>
+      </geometry>
+      <material name="绿色">
+        <color rgba="0.0 1.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.10" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.06 0.06 0.15"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.4"/>
+      <inertia ixx="0.0003633" ixy="0.0" ixz="0.0"
+        iyy="0.0003633" iyz="0.0" izz="0.00072"/>
+    </inertial>
+    </link>
+    <joint name="joint_wheel_${tag}" type="continuous">
+      <parent link="steer_${tag}"/>
+      <child link="wheel_${tag}"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <axis xyz="0.0 1.0 0.0"/>
+    </joint>
+    <joint name="joint_steer_${tag}" type="continuous">
+      <parent link="base_link"/>
+      <child link="steer_${tag}"/>
+      <origin xyz="${signx * hub_x} ${signy * hub_y} ${hub_z}" rpy="0.0 0.0 0.0"/>
+      <axis xyz="0.0 0.0 1.0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- 机器人身体部分 -->
+  <link name="base_link">
+    <!-- 部件的外观描述 -->
+    <visual>
+      <!-- 沿着自己几何中心的偏移和旋转量 -->
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <!-- 几何形状 -->
+      <geometry>
+        <box size="0.7 0.7 0.5"/>
+      </geometry>
+      <!-- 材质颜色 红绿蓝透明度-->
+      <material name="white">
+        <color rgba="1.0 1.0 1.0 0.5"/>
+      </material>
+    </visual>
+
+    <!--碰撞箱-->
+    <collision>
+      <geometry>
+        <box size="0.7 0.7 0.5"/>
+      </geometry>
+    </collision>
+
+    <!--质量与惯性-->
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="5.0"/>
+      <inertia ixx="0.308" ixy="0.0" ixz="0.0"
+        iyy="0.308" iyz="0.0" izz="0.408"/>
+    </inertial>
+  </link>
+
+  <!-- ============ Mid-360 外壳（纯外观）============
+       为什么用 <cylinder> 而不是网上的 mid360.stl —— 三个坑：
+         ① 单位：那份 stl 是【毫米】，但随附的 xacro 写 scale="0.0008"
+            → 算出来 58×48×52 mm，比真机小一圈 ✗
+         ② 朝向：那个 mesh 的圆柱轴沿它自己的 y 轴，
+            得写 rpy="pi/2 0 pi" 才能转正
+         ③ 路径：gz-sim 找 mesh 靠 GZ_SIM_RESOURCE_PATH，
+            我们还没 colcon build，只能用绝对路径焊死进 URDF ✗
+       <cylinder> 三个坑一个都没有 ✓ 而 Mid-360 本体本来就是圆柱 ✓
+
+       尺寸怎么来的：量了那份 mid360.stl 的包围盒
+         = 72.74 × 60.10 × 64.87 mm
+         60.10 → 高 60 mm ✓   64.87 → 本体直径 65 mm ✓
+         72.74 → 65 + 7.7，多出来的是侧面那个【航插接头】✓
+         和 Livox 手册的 65 × 65 × 60 mm 完全对得上
+
+       ⚠ 这里【不动 <sensor>】：传感器仍然 reference base_link，
+         所以点云的 frame_id 不变 → launch 里的静态 TF、
+         GLIM 的 lidar_frame_id 全都不用改 ✓ 纯增量的零风险改动
+         （哪天真要把 sensor 挪进 mid360_link，那三处要同步改） -->
+
+  <link name="mid360_link">
+    <visual>
+      <!-- <cylinder> 的几何中心在原点、轴沿 +Z ✓
+           所以放在 z=0.40 时它跨 z∈[0.37, 0.43]，
+           而雷达射线原点在 z=0.40 —— 正好落在壳体内部，和真机一样 ✓ -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <!-- ⚠⚠ URDF 和 SDF 的语法【不一样】，这里踩过一次：
+             URDF 几何参数是【属性】   <cylinder radius=".." length=".."/>
+             SDF  几何参数是【子元素】 <cylinder><radius>..</radius>..</cylinder>
+           写成 SDF 的样子，urdfdom 报
+             "Cylinder shape must have both length and radius attributes"
+           然后把【整条 visual 丢掉】✗
+           而且 xacro 照样展开成功 —— 它只查 XML 良构、不查 URDF 语义 ✗
+           ⇒ 改完 URDF 一定要跑 check_urdf（相当于 URDF 的编译器） -->
+      <geometry>
+        <cylinder radius="0.0325" length="0.060"/>
+        <!-- 直径 65 mm ÷ 2 ；高 60 mm
+             （对照：车体的 <box size="0.7 0.7 0.5"/> 也是属性写法 ✓）-->
+      </geometry>
+      <material name="mid360_dark">
+        <!-- 真机是深灰近黑。第 4 个数是【透明度】，1.0 = 不透明
+             别用车体那个 "1.0 1.0 1.0 0.5"（白色半透明）→ 看不出是个传感器 ✗ -->
+        <color rgba="0.08 0.08 0.09 1.0"/>
+      </material>
+    </visual>
+    <!-- 故意【不加 <collision>】：外壳不参与物理，
+         加了还可能挡住自己的雷达 ✗ -->
+  </link>
+
+  <joint name="mid360_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="mid360_link"/>
+    <!-- ⚠ 必须和下面 <plugin name="mid360_lidar"> 的
+         <sensor_pose>0 0 0.40 0 0 0</sensor_pose> 一致，
+         差一点"外壳"和"雷达"就错位，看着像装歪了 -->
+    <origin xyz="0 0 0.40" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 机器人的IMU部件，惯性测量 -->
+  <link name="imu_link">
+    <!-- 部件的外观描述 -->
+    <visual>
+      <!-- 沿着自己几何中心的偏移和旋转量 -->
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <!-- 几何形状 -->
+      <geometry>
+        <box size="0.02 0.02 0.02"/>
+      </geometry>
+      <!-- 材质颜色 红绿蓝透明度-->
+      <material name="white">
+        <color rgba="1.0 1.0 1.0 0.5"/>
+      </material>
+    </visual>
+
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.02"/>
+      <inertia ixx="1.3333e-06" ixy="0.0" ixz="0.0"
+        iyy="1.3333e-06" iyz="0.0" izz="1.3333e-06"/>
+    </inertial>
+
+  </link>
+
+  <!-- 机器人的关节，用于组合机器人的部件 -->
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0.0 0.0 0.3" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+  <!-- ============ 关节状态发布 ============
+       为什么需要它：四个角的关节是 continuous（可动关节），
+       RViz 画可动关节的位置靠 /joint_states，不发布的话它不知道该把
+       轮子摆在哪 → 全堆在原点 ✗
+
+       注意【整车一份】，所以放在宏外面（和雷达同理）✓ -->
+  <gazebo>
+    <plugin filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher">
+      <!-- ⚠ 显式指定话题名，否则默认是
+             /world/nuwa_field/model/mini_car/joint_state
+           和 ROS 侧的 /joint_states 对不上 ✗ 桥接就得用 YAML 分别写两边的名字 ✗
+           写成 /joint_states 两边同名 → 桥接可以用 @ 简写 ✓
+
+           ⚠ <update_rate> 一定要写！不写的话它跟着物理步长发，是 1000 Hz ✗
+             后果：subscriber 一直丢消息（"A message was lost!!!"）、
+                   parameter_bridge 白吃 12% CPU ✗
+             这是仿真步长频率，不是关节数据的需要 —— 50 Hz 对 RViz 完全够 ✓ -->
+      <topic>/joint_states</topic>
+      <update_rate>50</update_rate>
+    </plugin>
+  </gazebo>
+
+  <!-- ============ 里程计 ============
+       Gazebo 每帧告诉我们：车在世界系里的位姿 + 速度。
+       注意：这里给的位姿是【Gazebo 世界系】的，原点 = 场地中心 ✗
+             我们要的 map 系原点在启动区角上 → 中间差一个平移，
+             由 odom_to_tf 节点减掉（见 README §8 坐标系约定）
+
+       同样是【整车一份】，所以放在宏外面 ✓ -->
+  <gazebo>
+    <plugin filename="gz-sim-odometry-publisher-system"
+            name="gz::sim::systems::OdometryPublisher">
+      <odom_topic>/mini_car/odom</odom_topic>
+      <odom_publish_frequency>30</odom_publish_frequency>
+      <!-- 这个 frame_id 只是【消息里的标签】，告诉别人"我报的位姿属于哪个坐标系"。
+           插件给的是【Gazebo 世界系】的位姿（原点=场地中心），所以标签必须写
+           世界系的名字，不能写 map ✗
+           map 系由 odom_to_tf 节点减偏移后另行发布（见 README §8） -->
+      <odom_frame>nuwa_field</odom_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+      <dimensions>3</dimensions>
+    </plugin>
+  </gazebo>
+
+  <!-- ============ 两台 2D 雷达（思岚 C1）============
+       一台不够：只有台面上方 0.60 m 那一圈时，只能切到【中段】
+         （塔基 0.00~0.35 / 中段 0.35~0.70）→ 空位和只有塔基分不出来 ✗
+       两台分高度切两条带：
+
+         low   台面上方 0.175 m  → 切【塔基】正中间
+         high  台面上方 0.560 m  → 切【中段】；车在 L1 时还正好切到
+                                   L2 塔基（L2 台面 0.90，塔基 0.90~1.25）
+         高度都以【车所在的台面】为基准，base_link 在台面上方 0.30：
+             low  base_link 系 −0.125  →  0.30−0.125 = 0.175 ✓
+             high base_link 系 +0.260  →  0.30+0.260 = 0.560 ✓
+
+       为什么 low 装在车头前伸 0.42 m，不装在车体中间：
+         0.175 m 比车壳底面（台面上方 0.05）高，但仍在 0.5 m 高的车壳内部 ✗
+         放在车体里，射线先打到自己 → 全是假回波
+         前伸到 x=+0.42（车壳前沿 0.35）后，车头前方 ±95° 是干净的 ✓
+         后方被车身挡住，算法里对 low 只看前方视场 ✓
+
+       为什么 high 装在车顶正中：
+         检测点要一次扫完同层 4 个建塔处 → 必须 360° 无遮挡 ✓
+         车顶面在 base_link +0.25，雷达本体 60 mm 高；
+         射线平面放在 +0.26（只比车顶高 1 cm，避开自己的碰撞箱），
+         本体下沿会嵌进车顶 2 cm —— 只是外观，真实安装加个小垫片即可 ✓
+         Mid-360 在 +0.40，中间留 8 cm，不打架 ✓
+
+       注意：这段【不能】放进上面的宏里！
+         宏里 = 每个角一份 → 会生成 4 台同名雷达 ✗
+       传感器整车只有两台，所以放在宏【外面】，参考 base_link ✓ -->
+  <link name="lidar_low_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.0325" length="0.060"/></geometry>
+      <material name="lidar_dark"><color rgba="0.08 0.08 0.09 1.0"/></material>
+    </visual>
+    <!-- 故意不加 <collision>：外壳不参与物理，也别挡自己的雷达 ✓ -->
+  </link>
+  <joint name="lidar_low_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_low_link"/>
+    <origin xyz="0.42 0.0 -0.125" rpy="0 0 0"/>
+  </joint>
+
+  <link name="lidar_high_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.0325" length="0.060"/></geometry>
+      <material name="lidar_dark"><color rgba="0.08 0.08 0.09 1.0"/></material>
+    </visual>
+  </link>
+  <joint name="lidar_high_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_high_link"/>
+    <origin xyz="0.0 0.0 0.26" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="base_link">
+    <sensor name="lidar_low" type="gpu_lidar">
+      <!-- ⚠ 和 lidar_low_joint 的 <origin> 一致；
+           也和 launch 里 base_link→…/lidar_low 的静态 TF 一致 ✗ 三处必须同步 -->
+      <pose>0.42 0 -0.125 0 0 0</pose>
+      <update_rate>10</update_rate>          <!-- C1 典型 10 Hz -->
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>500</samples>           <!-- 360° / 0.72° 角分辨率 -->
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.05</min>                    <!-- C1 盲区 5 cm -->
+          <max>12.0</max>                    <!-- C1 对白墙 12 m -->
+        </range>
+      </lidar>
+      <!-- 不写 <topic> 的话名字是
+             /world/nuwa_field/model/mini_car/link/base_link/sensor/lidar_low/scan
+           又长又难用。写了 <topic> 就变成干净的 /scan_low ✓ -->
+      <topic>scan_low</topic>
+      <always_on>1</always_on>
+      <visualize>true</visualize>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="base_link">
+    <sensor name="lidar_high" type="gpu_lidar">
+      <!-- ⚠ 和 lidar_high_joint 的 <origin> 一致；
+           也和 launch 里 base_link→…/lidar_high 的静态 TF 一致 -->
+      <pose>0 0 0.26 0 0 0</pose>
+      <update_rate>10</update_rate>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>500</samples>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.05</min>
+          <max>12.0</max>
+        </range>
+      </lidar>
+      <topic>scan_high</topic>
+      <always_on>1</always_on>
+      <visualize>true</visualize>
+    </sensor>
+  </gazebo>
+
+  <!-- ============ RealSense D435 / D455（RGB-D 相机）============
+
+       两台都装上了（用户说可能两台都要用）。用 gz 的 rgbd_camera 传感器，
+       它的输出正好对上 RealSense：
+           <topic>/image         ←→  /camera/color/image_raw
+           <topic>/depth_image   ←→  /camera/depth/image_rect_raw
+           <topic>/points        ←→  /camera/depth/color/points
+           <topic>/camera_info   ←→  /camera/color/camera_info
+       （单独的 depth_camera 类型只发 /points，没有图像和 camera_info ✗ 不够用）
+
+       ⚠⚠ 安装位置是我【猜的】✗ 真机的实际位置我不知道。
+          现在两台都放在车头前方（车头朝 +x），D435 在下、D455 在上。
+          知道真实位置的话，改下面两个 <joint> 的 <origin> 就行 ✓
+
+       ⚠ 两台的真实差异（会影响该用哪台）：
+
+                           D435            D455
+           深度 FOV        87°×58°         87°×58°   ← 一样
+           立体基线        55 mm           95 mm     ← 差近一倍
+           最近距离        0.28 m          0.52 m    ← D435 能看更近
+           理想量程        0.3~3 m         0.6~6 m   ← D455 看得更远
+           RGB FOV         69°(卷帘)       90°(全局快门)
+           IMU             无              有
+
+           ⇒ 抓取（近距离）用 D435 合适；远距离/室外用 D455 合适 ✓
+
+       ⚠ 仿真保真度的硬伤：gz 的深度相机是【渲染出来的理想深度】✗
+           真机上会有的现象，仿真里【一个都没有】：
+             · 无纹理表面（白墙/纯色物）测不到 → 空洞        ✗ 仿真里正常
+             · 反光/透明物体测不到                          ✗ 仿真里正常
+             · 立体匹配噪声、深度边缘飞点                   ✗ 没有
+             · 红外投影图案                                  ✗ 没有
+           ⇒ 仿真能验证「坐标系/话题/流程/几何」对不对 ✓
+             不能验证「在有空洞和噪声的真机数据上稳不稳」✗
+
+       ⚠ 光线方向约定：gz 的相机沿【自身坐标系的 +X】看 ✓
+          （和 ROS 光学系的 +Z 朝前不一样，桥接/使用时要注意）-->
+  <link name="d435_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <!-- D435 外形 90×25×25 mm，长边沿车宽方向（横着装） -->
+        <box size="0.025 0.090 0.025"/>
+      </geometry>
+      <material name="realsense_dark"><color rgba="0.15 0.15 0.16 1.0"/></material>
+    </visual>
+  </link>
+  <joint name="d435_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="d435_link"/>
+    <!-- 车头 +x 方向、离中心 0.36（车壳半宽 0.35，略微探出） -->
+    <origin xyz="0.36 0.0 0.10" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="d435_link">
+    <sensor name="d435" type="rgbd_camera">
+      <pose>0 0 0 0 0 0</pose>
+      <update_rate>30</update_rate>       <!-- 真机 pose_est 用的就是 640x480x30 -->
+      <topic>d435</topic>
+      <camera>
+        <!-- 87° = 1.5184 rad。注意这是【深度】的 FOV；
+             D435 的 RGB 其实只有 69°，但 rgbd_camera 只有一台虚拟相机，
+             图像和深度共用同一个 FOV ✗ 这一处仿真做不出一致 -->
+        <horizontal_fov>1.5184</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.28</near>              <!-- D435 的最近有效距离 -->
+          <far>10.0</far>
+        </clip>
+      </camera>
+      <depth_camera>
+        <!-- rgbd_camera 要求两个都写，缺一个会报 "Depth or image cameras don't exist" ✗ -->
+        <clip>
+          <near>0.28</near>
+          <far>10.0</far>
+        </clip>
+      </depth_camera>
+      <always_on>1</always_on>
+      <visualize>false</visualize>
+    </sensor>
+  </gazebo>
+
+  <xacro:if value="$(arg with_d455)">
+  <link name="d455_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <!-- D455 外形 124×26×36 mm（比 D435 长） -->
+        <box size="0.036 0.124 0.026"/>
+      </geometry>
+      <material name="realsense_dark"><color rgba="0.15 0.15 0.16 1.0"/></material>
+    </visual>
+  </link>
+  <joint name="d455_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="d455_link"/>
+    <origin xyz="0.36 0.0 0.22" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="d455_link">
+    <sensor name="d455" type="rgbd_camera">
+      <pose>0 0 0 0 0 0</pose>
+      <update_rate>30</update_rate>
+      <topic>d455</topic>
+      <camera>
+        <horizontal_fov>1.5184</horizontal_fov>   <!-- 深度也是 87°，和 D435 一样 -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.52</near>              <!-- D455 的最近有效距离，比 D435 远一倍 -->
+          <far>20.0</far>                <!-- D455 因为基线长，量程也更远 -->
+        </clip>
+      </camera>
+      <depth_camera>
+        <clip>
+          <near>0.52</near>
+          <far>20.0</far>
+        </clip>
+      </depth_camera>
+      <always_on>1</always_on>
+      <visualize>false</visualize>
+    </sensor>
+  </gazebo>
+  </xacro:if>
+
+  <!-- ============ Mid-360（3D 激光雷达，完全仿真）============
+       真机参数（Livox Mid-360）：
+         视场角    水平 360° × 垂直 −7° ~ +52°（不对称，朝上多）
+         量程      40 m @ 10% 反射率
+         点频      ~20 万点/秒
+         扫描方式  【非重复扫描】—— 光斑走花式轨迹，帧与帧之间不重合
+         时间戳    【逐点时间戳】—— 一帧 100 ms 是扫出来的，不是拍的
+         内置 IMU  ✓（下面单独建了一个）
+
+       ⚠ 这里【不再用】gpu_lidar，改用本仓库的 gz-sim 系统插件
+         `robots/src/mid360_sim`（libmid360_lidar_system.so）：
+           · 回放 Livox 官方实测的 80 万条扫描轨迹（4 秒 / 40 帧）；
+           · 每帧 20000 点（20 万点/秒 ÷ 10 Hz）；
+           · 把一帧打散成小批，在【每个点自己的仿真时刻】做物理射线投射
+             → 车运动时产生真实的帧内运动，而不是"整帧同一瞬间"✗
+           · 点云字段 x,y,z,intensity,tag,line,ring,t
+             t = 相对帧头的秒数（0 ~ 0.099995 s）→ GLIM 做逐点去畸变 ✓
+           · 文件回绕时加黄金角旋转，长时间运行不会精确重复 ✓
+
+       ⚠ 插件必须【先编译】：
+           robots/src/mid360_sim/build.sh
+         启动文件会自动把它加进 GZ_SIM_SYSTEM_PLUGIN_PATH ✓
+
+       ⚠ GLIM 的 config_sensors.json 必须同时改成：
+           global_shutter_lidar: false     （否则逐点时间会被清零 ✗）
+           perpoint_relative_time: true
+           perpoint_time_scale: 1.0
+
+       ⚠ 不要再保留同名的 <sensor type="gpu_lidar"> —— 会发两个
+         /mid360/points，一个规则栅格一个真实花形，GLIM 会收到交错数据 ✗ -->
+  <gazebo>
+    <plugin filename="libmid360_lidar_system.so" name="mid360_lidar">
+      <!-- 射线挂在 base_link 上；传感器位姿在 link 系里给。
+           fixed joint 的 mid360_link 会被 gazebo 合并，不能挂它 ✗ -->
+      <link_name>base_link</link_name>
+      <sensor_pose>0 0 0.40 0 0 0</sensor_pose>
+
+      <!-- gz 侧话题名；mini_car.launch.py 把它桥到 ROS 同名话题 -->
+      <topic>/mid360/points</topic>
+      <!-- 和静态 TF base_link -> mini_car/base_link/mid360 一致 -->
+      <frame_id>mini_car/base_link/mid360</frame_id>
+
+      <!-- 由 mini_car.launch.py 传绝对路径；直接 xacro 时按 .so 相对位置找 -->
+      <pattern_file>$(arg mid360_pattern)</pattern_file>
+
+      <points_per_scan>20000</points_per_scan>
+      <!-- 每 N 行发一个点，保持整帧 FOV 覆盖和真实逐点时刻：
+             1 = 完整 2 万点/帧（RTF≈0.86）
+             2 = 1 万点/帧  （RTF≈1.00，GLIM 反正也会降到 1 万）
+             4 = 5 千点/帧  （RTF≈1.00）
+           性能不够时优先改这里，不要改 points_per_scan ✗ -->
+      <point_stride>1</point_stride>
+      <scan_rate_hz>10.0</scan_rate_hz>
+      <range_min>0.1</range_min>
+      <range_max>40.0</range_max>
+      <!-- 量程噪声：Mid-360 典型 ±2 cm，1 cm (1σ) 是保守值 -->
+      <range_noise_stddev>0.01</range_noise_stddev>
+      <!-- 实测 mid360_static_01 的有效点反射率中位数约 44~45（0~255）。
+           仿真没有材质反射率模型，先发固定值；GLIM 不依赖它 ✓ -->
+      <intensity>45</intensity>
+      <dropout_probability>0.0</dropout_probability>
+      <line_count>4</line_count>
+      <seed>42</seed>
+      <azimuth_cycle_offset_deg>137.507764</azimuth_cycle_offset_deg>
+      <log_interval>100</log_interval>
+    </plugin>
+  </gazebo>
+
+  <!-- ============ IMU ============
+       装在 base_link 上，为什么不是 imu_link：
+         imu_link 是 fixed joint 连到 base_link 的，Gazebo 会把 fixed 连接的
+         子 link 【合并进父 link】✗ 所以传感器的 reference 要写 base_link ✓
+
+       Mid-360 内置 IMU 的典型频率是 200 Hz ✓
+
+       ⚠ <imu> 里面【必须写参数】，不能空着 ✗
+         写空的话 URDF→SDF 会生成 <imu/>，Gazebo 不报错但传感器【不发布】✗
+         表现：gz topic -l 里根本没有 /imu，桥接那边报
+               "Failed to create a bridge for topic [/imu]" -->
+  <gazebo reference="base_link">
+    <sensor name="imu" type="imu">
+      <pose>0 0 0.30 0 0 0</pose>
+      <update_rate>200</update_rate>
+      <topic>imu</topic>
+      <always_on>1</always_on>
+      <imu>
+        <!-- 噪声对齐实测 Mid-360（/data/bags/mid360_static_01，207 Hz）：
+             陀螺：σ≈0.0022 rad/s，静态零偏≈[-0.00865, 0.00051, -0.00463] rad/s
+             加计：σ≈0.073 m/s²（0.0074 g），单位是 m/s²（不是 g）✗
+             Gazebo 的 stddev 是【每个采样】的标准差，不是连续时间密度。
+             想要"理想 IMU"就把 stddev 和 mean 全改成 0 ✓ -->
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>-0.00865</mean><stddev>0.0022</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.00051</mean><stddev>0.0022</stddev></noise></y>
+          <z><noise type="gaussian"><mean>-0.00463</mean><stddev>0.0022</stddev></noise></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0</mean><stddev>0.073</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0</mean><stddev>0.073</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0</mean><stddev>0.073</stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+  <xacro:my_corner tag="FL" signx=" 1" signy=" 1"/>     
+  <xacro:my_corner tag="FR" signx=" 1" signy="-1"/>
+  <xacro:my_corner tag="RL" signx="-1" signy=" 1"/>
+  <xacro:my_corner tag="RR" signx="-1" signy="-1"/>
+</robot>
+
